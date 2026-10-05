@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+*.user
+# Sorties de build de l'installeur (publiées en Release, pas dans le dépôt)
+installer/work/
+installer/out/

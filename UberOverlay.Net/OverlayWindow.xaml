@@ -1,0 +1,179 @@
+<Window x:Class="UberOverlay.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Uber Eats" Width="340" Height="236"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize" ShowActivated="False"
+        FontFamily="Segoe UI Variable Text, Segoe UI, Segoe UI Emoji" TextOptions.TextFormattingMode="Display">
+    <Window.Resources>
+        <SolidColorBrush x:Key="Accent" Color="#06C167"/>
+
+        <!-- Boutons d'icônes de la barre -->
+        <Style x:Key="IconBtn" TargetType="Button">
+            <Setter Property="Width" Value="26"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Margin" Value="3,0,0,0"/>
+            <Setter Property="Foreground" Value="#CCFFFFFF"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="7">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#26FFFFFF"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Curseur de transparence -->
+        <Style x:Key="SliderFill" TargetType="RepeatButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Grid Background="Transparent">
+                            <Border Height="4" CornerRadius="2,0,0,2" Background="{StaticResource Accent}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SliderEmpty" TargetType="RepeatButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Grid Background="Transparent">
+                            <Border Height="4" CornerRadius="0,2,2,0" Background="#2EFFFFFF" VerticalAlignment="Center"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SliderThumb" TargetType="Thumb">
+            <Setter Property="Width" Value="14"/>
+            <Setter Property="Height" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Ellipse x:Name="e" Fill="White" Stroke="{StaticResource Accent}" StrokeThickness="2"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="e" Property="StrokeThickness" Value="4"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="e" Property="StrokeThickness" Value="5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="OpacitySlider" TargetType="Slider">
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderFill}"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource SliderThumb}"/>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderEmpty}"/>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="Card" Margin="8" CornerRadius="16" BorderBrush="#26FFFFFF" BorderThickness="1">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#F01E1E1E" Offset="0"/>
+                <GradientStop Color="#F0121212" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.45"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Barre de titre (zone de déplacement) -->
+            <Border Grid.Row="0" BorderBrush="#14FFFFFF" BorderThickness="0,0,0,1" Background="Transparent"
+                    Padding="14,8,8,7" CornerRadius="16,16,0,0" MouseLeftButtonDown="Bar_MouseLeftButtonDown">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="Dot" Width="8" Height="8" Fill="#06C167" Margin="0,1,8,0"/>
+                        <TextBlock Text="Uber Eats" Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="RefreshBtn" Style="{StaticResource IconBtn}" Content="&#xE72C;" Click="Refresh_Click"/>
+                        <Button x:Name="LoginBtn" Style="{StaticResource IconBtn}" Content="&#xE77B;" Click="Login_Click"/>
+                        <Button x:Name="GhostBtn" Style="{StaticResource IconBtn}" Content="&#xE7B3;" Click="Ghost_Click"/>
+                        <Button x:Name="QuitBtn" Style="{StaticResource IconBtn}" Content="&#xE711;" Click="Quit_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1" Margin="16,10,16,0" VerticalAlignment="Center">
+                <TextBlock x:Name="StatusText" Text="Chargement…" FontSize="16" FontWeight="SemiBold" Foreground="#F2FFFFFF" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="EtaText" FontSize="30" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,2,0,6"/>
+                <Grid Height="6">
+                    <Border Background="#26FFFFFF" CornerRadius="3"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="FillCol" Width="0*"/>
+                            <ColumnDefinition x:Name="RestCol" Width="100*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border CornerRadius="3">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#06C167" Offset="0"/>
+                                    <GradientStop Color="#3DE08C" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                </Grid>
+                <TextBlock x:Name="SubText" FontSize="12" Foreground="#99FFFFFF" Margin="0,9,0,0" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+
+            <!-- Pied : réglage de transparence + dernière mise à jour -->
+            <Grid Grid.Row="2" Margin="14,8,14,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="OpacityIcon" Text="&#xE706;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"
+                           Foreground="#99FFFFFF" VerticalAlignment="Center"/>
+                <Slider x:Name="OpacitySlider" Grid.Column="1" Style="{StaticResource OpacitySlider}" Margin="8,0,0,0"
+                        Minimum="20" Maximum="100" VerticalAlignment="Center"
+                        ValueChanged="Opacity_Changed"/>
+                <TextBlock x:Name="PctText" Grid.Column="2" FontSize="11" Foreground="#99FFFFFF" Width="34"
+                           TextAlignment="Right" VerticalAlignment="Center"/>
+                <TextBlock x:Name="UpdatedText" Grid.Column="3" FontSize="11" Foreground="#80FFFFFF"
+                           Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
