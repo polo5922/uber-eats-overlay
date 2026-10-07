@@ -41,6 +41,10 @@ Uber Eats has no public API. Every 30 to 60 seconds the app briefly opens a WebV
 
 To debug the page reading, launch the app with the environment variable `UBER_DEBUG=1`; a log is written to `%AppData%\UberOverlay\debug.log`. That log contains the text of your orders page, so do not share it as is.
 
+## License
+
+[MIT](LICENSE)
+
 ## Build
 
 Requires the .NET 9 SDK.
