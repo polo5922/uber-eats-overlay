@@ -145,7 +145,8 @@ public partial class OverlayWindow : Window
         var m = Regex.Match(raw, @"(\d{1,2})\s*[:h]\s*(\d{2})\s*(am|pm)?", RegexOptions.IgnoreCase);
         if (!m.Success) return (null, raw.Trim());
         int h = int.Parse(m.Groups[1].Value), min = int.Parse(m.Groups[2].Value);
-        var ap = m.Groups[3].Value.ToLowerInvariant();
+        var apm = Regex.Match(raw, @"(am|pm)", RegexOptions.IgnoreCase);
+        var ap = (m.Groups[3].Success ? m.Groups[3].Value : apm.Value).ToLowerInvariant();
         if (ap == "pm" && h < 12) h += 12;
         if (ap == "am" && h == 12) h = 0;
         if (h > 23 || min > 59) return (null, raw.Trim());

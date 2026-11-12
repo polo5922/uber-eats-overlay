@@ -32,18 +32,19 @@ public class OrderScraper
       const lines = text.split('\n').map(s => s.trim()).filter(l => l && !noise.test(l));
       const isList = location.pathname.replace(/\/+$/, '').endsWith('/orders');
       if (isList) {
-        const hs = [...document.querySelectorAll('h1,h2,h3')];
+        const hs = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading],div,span,p')].filter(e => e.children.length === 0 && e.innerText && e.innerText.length < 40);
         const hp = hs.find(h => /^(in progress|en cours|en curso)/i.test(h.innerText.trim()));
         const hpast = hs.find(h => /^(past orders|commandes pass|pedidos anteriores|pedidos pasados)/i.test(h.innerText.trim()));
-        if (!hp) return { state: 'idle', url };
+        const dbg = { heads: hs.map(h => h.innerText.trim()).slice(0, 20), links: [...document.querySelectorAll('a[href*="/orders/"]')].map(a => a.getAttribute('href') + ' | ' + a.innerText.trim().slice(0, 60)).slice(0, 20), head: lines.slice(0, 40) };
+        if (!hp) return { state: 'idle', url, dbg };
         const link = [...document.querySelectorAll('a[href*="/orders/"]')].find(a =>
           (hp.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING) &&
           (!hpast || (hpast.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_PRECEDING)));
-        if (!link) return { state: 'idle', url };
+        if (!link) return { state: 'idle', url, dbg };
         return { state: 'active', trackHref: link.href, url };
       }
       const find = (re) => lines.find(l => re.test(l));
-      const status = find(/préparation|prepar|en route|arriv|livré|livraison|delivered|on its way|picked up|récupér|accept|confirm|finding|recherche|preparando|en camino|de camino|llegando|llega|entregado|aceptad|confirmad|buscando|recogid/i);
+      const status = find(/picking up|preparing|on its way|on the way|heading|récupération|en préparation|en route|preparando|recogiendo|en camino|de camino/i) || find(/préparation|prepar|en route|arriv|livré|livraison|delivered|on its way|picked up|récupér|accept|confirm|finding|recherche|preparando|en camino|de camino|llegando|llega|entregado|aceptad|confirmad|buscando|recogid/i);
       const eta = find(/\d+\s*(min|h)\b|\b\d{1,2}[:h]\d{2}\b/i);
       const delivered = /commande livrée|order delivered|has been delivered|a été livrée|pedido entregado|ha sido entregado/i.test(text);
       const title = (document.querySelector('h1,h2') || {}).innerText;

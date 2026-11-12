@@ -45,7 +45,7 @@ try {
     $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\UberOverlay'
     New-Item -Force $key | Out-Null
     Set-ItemProperty $key DisplayName 'Uber Eats Overlay'
-    Set-ItemProperty $key DisplayVersion '1.0.0'
+    Set-ItemProperty $key DisplayVersion '1.0.1'
     Set-ItemProperty $key Publisher 'Paul'
     Set-ItemProperty $key DisplayIcon $exe
     Set-ItemProperty $key InstallLocation $dst
