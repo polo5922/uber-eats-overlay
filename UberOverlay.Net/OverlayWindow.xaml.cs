@@ -90,8 +90,9 @@ public partial class OverlayWindow : Window
     {
         var key = d.State + "|" + d.Status;
         if (lastKey != null && key != lastKey && (d.State == "active" || d.State == "delivered"))
-            tray.ShowBalloonTip(5000, "Uber Eats", d.State == "delivered" ? Loc.Get("balloonDelivered") : d.Status ?? Loc.Get("balloonUpdated"), Forms.ToolTipIcon.Info);
+            tray.ShowBalloonTip(5000, "Uber Eats", d.State == "delivered" ? Loc.Get("balloonDelivered") : StageOf(d.Status).key is { } k ? Loc.Get(k) : d.Status ?? Loc.Get("balloonUpdated"), Forms.ToolTipIcon.Info);
         lastKey = key;
+        TrackOrderStart(d);
         bool wasConnected = Connected;
         last = d;
         if (Connected != wasConnected) ApplyLanguage(); // met à jour le libellé du bouton et du menu
@@ -127,15 +128,35 @@ public partial class OverlayWindow : Window
 
     string Hhmm(DateTime t) => t.ToString(Use24h ? "HH:mm" : "h:mm tt", System.Globalization.CultureInfo.InvariantCulture);
 
-    static int ProgressOf(OrderData d)
+    // Étape de livraison déduite du texte d'Uber Eats (FR/EN/ES) -> (clé de traduction, progression mini)
+    static (string? key, int pct) StageOf(string? status)
     {
-        var s = (d.Status ?? "").ToLowerInvariant();
+        var s = (status ?? "").ToLowerInvariant();
+        if (Regex.IsMatch(s, "picking up|récupération|récupère|recogiendo|recoger|going to the restaurant|se rend au restaurant|va al restaurante")) return ("stPickup", 40);
+        if (Regex.IsMatch(s, "arriv|proche|nearby|llegando|llega|almost here|presque")) return ("stArriving", 90);
+        if (Regex.IsMatch(s, "on the way|on its way|en route|en chemin|picked up|récupéré|en camino|de camino|recogido|heading|delivering")) return ("stEnroute", 65);
+        if (Regex.IsMatch(s, "prepar|préparation")) return ("stPreparing", 20);
+        if (Regex.IsMatch(s, "accept|confirm|finding|recherche|buscando|placed|received|reçue|recibido|aceptad|confirmad")) return ("stPlaced", 5);
+        return (null, 0);
+    }
+
+    // Mémorise l'heure à laquelle on voit la commande pour la première fois (début de la barre de progression)
+    void TrackOrderStart(OrderData d)
+    {
+        if (d.State != "active" || string.IsNullOrEmpty(d.TrackHref)) return;
+        var id = d.TrackHref.TrimEnd('/').Split('/').Last();
+        if (id == settings.OrderId && settings.OrderStart != null) return;
+        settings.OrderId = id; settings.OrderStart = DateTime.Now; settings.Save();
+    }
+
+    // Progression : le plus avancé entre l'étape annoncée par Uber et le temps écoulé jusqu'à l'arrivée estimée
+    int ProgressOf(OrderData d, DateTime? eta)
+    {
         if (d.State == "delivered") return 100;
-        if (Regex.IsMatch(s, "arriv|proche|nearby|llegando|llega")) return 90;
-        if (Regex.IsMatch(s, "en route|on its way|picked up|récupér|en camino|de camino|recogid")) return 70;
-        if (Regex.IsMatch(s, "préparation|prepar")) return 40;
-        if (Regex.IsMatch(s, "accept|confirm|aceptad|confirmad")) return 20;
-        return 10;
+        int pct = Math.Max(StageOf(d.Status).pct, 3);
+        if (eta is { } e && settings.OrderStart is { } start && e > start)
+            pct = Math.Max(pct, (int)Math.Clamp((DateTime.Now - start).TotalSeconds / (e - start).TotalSeconds * 100, 0, 97));
+        return pct;
     }
 
     // "7:45 PM", "19:45", "19h45" -> heure ; sinon durée telle quelle ("10-15 min")
@@ -177,12 +198,14 @@ public partial class OverlayWindow : Window
             case "delivered": status = Loc.Get("delivered"); pct = 100; break;
             case "error": status = Loc.Get("error"); sub = d.Message ?? ""; break;
             default:
-                status = d.Status ?? Loc.Get("orderDefault");
-                pct = ProgressOf(d);
+                var (stage, _) = StageOf(d.Status);
+                status = stage != null ? Loc.Get(stage) : d.Status ?? Loc.Get("orderDefault");
                 var (at, text) = ParseEta(d.Eta);
+                pct = ProgressOf(d, at);
                 if (at is { } a) { eta = Remaining(a); sub = string.Format(Loc.Get("arrival"), Hhmm(a)); }
                 else eta = text ?? "";
-                if (!string.IsNullOrEmpty(d.Title)) sub = sub.Length > 0 ? $"{sub} · {d.Title}" : d.Title;
+                // Le titre d'Uber n'est gardé que s'il n'est pas déjà traduit dans le statut
+                if (stage == null && !string.IsNullOrEmpty(d.Title) && d.Title != d.Status) sub = sub.Length > 0 ? $"{sub} · {d.Title}" : d.Title;
                 break;
         }
         Dot.Fill = new SolidColorBrush(d.State switch

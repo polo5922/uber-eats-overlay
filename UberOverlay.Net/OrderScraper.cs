@@ -122,7 +122,7 @@ public class OrderScraper
             if (d.State == "active" && d.TrackHref is { } href && href.Contains("/orders/"))
             {
                 await NavigateAsync(wv, href);
-                d = await ExtractAsync(wv);
+                d = await ExtractAsync(wv) with { TrackHref = href };
             }
             return d;
         }

@@ -14,6 +14,10 @@ public class Settings
     /// <summary>"auto" (format de Windows), "24" ou "12".</summary>
     public string TimeFormat { get; set; } = "auto";
 
+    /// <summary>Commande suivie et heure à laquelle l'app l'a vue pour la première fois.</summary>
+    public string? OrderId { get; set; }
+    public DateTime? OrderStart { get; set; }
+
     public static readonly string Folder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UberOverlay");
     static string FilePath => Path.Combine(Folder, "settings.json");
